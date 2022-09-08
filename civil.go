@@ -22,6 +22,8 @@
 package civil
 
 import (
+	"database/sql/driver"
+	"errors"
 	"fmt"
 	"time"
 )
@@ -124,6 +126,31 @@ func (d *Date) UnmarshalText(data []byte) error {
 	var err error
 	*d, err = ParseDate(string(data))
 	return err
+}
+
+func (x *Date) Scan(value interface{}) error {
+
+	switch v := value.(type) {
+	case time.Time:
+		dt := DateOf(v)
+
+		*x = dt
+	case string:
+		dt, err := ParseDate(v)
+
+		if err != nil {
+			return err
+		}
+		*x = dt
+	default:
+		return errors.New("could not scan value")
+	}
+
+	return nil
+}
+
+func (x Date) Value() (driver.Value, error) {
+	return x.String(), nil
 }
 
 // A Time represents a time with nanosecond precision.
